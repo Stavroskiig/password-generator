@@ -1,36 +1,103 @@
 import random
+import sys
 import string
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import (QApplication, QCheckBox, QLabel, QLineEdit,
+                             QPushButton, QWidget, QMessageBox, QSpinBox)
+
+__name__ = '__main__'
 
 
-def password_generator(length, use_uppercase, use_numbers, use_special_characters):
-    # create a string of possible characters to use in the password
-    possible_characters = string.ascii_letters
-    if use_uppercase:
-        # add uppercase letters to possible characters
-        possible_characters += string.ascii_uppercase
-    if use_numbers:
-        # add digits to possible characters
-        possible_characters += string.digits
-    if use_special_characters:
-        # add special characters to possible characters
-        possible_characters += "!@#$%^&*()_+-=[]{};:,.<>/?\""
-    # generate a random password of specified length
-    # using a list comprehension and the "random.choice" function
-    # to randomly select characters from "possible_characters",
-    # and join them together to create a string password of specified length
-    password = ''.join(random.choice(possible_characters) for _ in range(length))
-    return password
+class PasswordGenerator(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.numbers_checkbox = None
+        self.copy_password_button = None
+        self.special_characters_checkbox = None
+        self.generate_password_button = None
+        self.length_spin_box = None
+        self.uppercase_checkbox = None
+        self.length_label = None
+        self.password_line_edit = None
+        self.password_label = None
+        self.password = ""
+        self.use_uppercase = False
+        self.use_numbers = False
+        self.use_special_characters = False
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle("Password Generator")
+
+        self.password_label = QLabel("Password:", self)
+        self.password_label.move(20, 20)
+
+        self.password_line_edit = QLineEdit(self)
+        self.password_line_edit.move(80, 20)
+        self.password_line_edit.setReadOnly(True)
+
+        self.length_label = QLabel("Length:", self)
+        self.length_label.move(20, 50)
+
+        self.length_spin_box = QSpinBox(self)
+        self.length_spin_box.move(80, 50)
+        self.length_spin_box.setMinimum(8)
+        self.length_spin_box.setMaximum(32)
+        self.length_spin_box.setValue(16)
+
+        self.uppercase_checkbox = QCheckBox("Use Uppercase Letters", self)
+        self.uppercase_checkbox.move(20, 80)
+        self.uppercase_checkbox.stateChanged.connect(self.use_uppercase_changed)
+
+        self.numbers_checkbox = QCheckBox("Use Numbers", self)
+        self.numbers_checkbox.move(20, 110)
+        self.numbers_checkbox.stateChanged.connect(self.use_numbers_changed)
+
+        self.special_characters_checkbox = QCheckBox("Use Special Characters", self)
+        self.special_characters_checkbox.move(20, 140)
+        self.special_characters_checkbox.stateChanged.connect(self.use_special_characters_changed)
+
+        self.generate_password_button = QPushButton("Generate Password", self)
+        self.generate_password_button.move(20, 170)
+        self.generate_password_button.clicked.connect(self.generate_password)
+
+        self.copy_password_button = QPushButton("Copy to clipboard", self)
+        self.copy_password_button.move(20, 200)
+        self.copy_password_button.clicked.connect(self.copy_password)
+
+        self.setGeometry(300, 300, 300, 250)
+        self.show()
+
+        self.length_spin_box.valueChanged.connect(self.generate_password)
+        self.generate_password()
+
+    def generate_password(self):
+        possible_characters = string.ascii_lowercase
+        if self.use_uppercase:
+            possible_characters += string.ascii_uppercase
+        if self.use_numbers:
+            possible_characters += string.digits
+        if self.use_special_characters:
+            possible_characters += "!@#$%^&*()_+-=[]{};:,.<>/?\""
+        self.password = ''.join(random.choice(possible_characters) for _ in range(self.length_spin_box.value()))
+        self.password_line_edit.setText(self.password)
+
+    def use_uppercase_changed(self, state):
+        self.use_uppercase = state == Qt.Checked
+
+    def use_numbers_changed(self, state):
+        self.use_numbers = state == Qt.Checked
+
+    def use_special_characters_changed(self, state):
+        self.use_special_characters = state == Qt.Checked
+
+    def copy_password(self):
+        clipboard = QApplication.clipboard()
+        clipboard.setText(self.password)
+        QMessageBox.information(self, "Password Copied", "The password has been copied to your clipboard.")
 
 
-# prompt the user for desired password length
-password_length = int(input("Enter the desired length of the password: "))
-# prompt the user for whether to use uppercase letters
-use_uppercase = input("Do you want to use uppercase letters? (y/n)").lower() == 'y'
-# prompt the user for whether to use numbers
-use_numbers = input("Do you want to use numbers? (y/n)").lower() == 'y'
-# prompt the user for whether to use special characters
-use_special_characters = input("Do you want to use special characters? (y/n)").lower() == 'y'
-
-# generate and print the password
-password = password_generator(password_length, use_uppercase, use_numbers, use_special_characters)
-print(password)
+if __name__ == '__main__':
+    app = QApplication([])
+password_generator = PasswordGenerator()
+sys.exit(app.exec_())
